@@ -8,12 +8,14 @@ using Core.Specification;
 using API.Dtos;
 using System.Linq;
 using AutoMapper;
+using API.Errors;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductsController : ControllerBase
+    //[ApiController]
+    //[Route("api/[controller]")]
+    public class ProductsController : BaseApiController
     {
         /*
         private readonly IProductRepository _repo;
@@ -43,51 +45,26 @@ namespace API.Controllers
         {
             // Generic 
             var spec = new ProductWithTypesAndBrandsSpecification();
+
             var products = await _productsRepo.ListAsync(spec);
 
-            //var products = await _productsRepo.ListAllAsync();
-            //return Ok(products);
-
-            /*
-            return products.Select(product => new ProductToReturnDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                PictureUrl = product.PictureUrl,
-                Price = product.Price,
-                ProductBrand = product.ProductBrand.Name,
-                ProductType = product.ProductType.Name
-            }).ToList();
-            */
             return Ok(_mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]    
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]        
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
             // Generic
             var spec = new ProductWithTypesAndBrandsSpecification(id);
-            //return await _productsRepo.GetEntityWithSpec(spec);
+
             var product = await _productsRepo.GetEntityWithSpec(spec);
+
+            if (product == null) return NotFound(new ApiResponse(404));
 
             return _mapper.Map<Product, ProductToReturnDto>(product);
 
-            /*
-            return new ProductToReturnDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                PictureUrl = product.PictureUrl,
-                Price = product.Price,
-                ProductBrand = product.ProductBrand.Name,
-                ProductType = product.ProductType.Name
-            };
-            */
-
-            // Non Generic
-            //return await _productsRepo.GetByIdAsync(id);
         }
 
         [HttpGet("brands")]
